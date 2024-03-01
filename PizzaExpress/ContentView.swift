@@ -9,70 +9,51 @@ import SwiftUI
 import CoreData
 
 struct ContentView: View {
-    @Environment(\.managedObjectContext) private var viewContext
-
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \Item.timestamp, ascending: true)],
-        animation: .default)
-    private var items: FetchedResults<Item>
-
+    var menu:[MenuItem]
+    @StateObject var orders:OrderModel = OrderModel()
+    @State private var showOrders:Bool = false
+    @State private var selectedItem:MenuItem = noMenuItem
+    @State private var presentGrid:Bool = false
     var body: some View {
-        NavigationView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp!, formatter: itemFormatter)")
-                    } label: {
-                        Text(item.timestamp!, formatter: itemFormatter)
-                    }
-                }
-                .onDelete(perform: deleteItems)
+        
+        TabView {
+            
+            VStack{
+                HeaderView()
+                    .shadow(radius: 5)
+                    .environment(\.colorScheme,.light)
+                StatusBarView(showOrders: $showOrders, presentGrid: $presentGrid)
+//                MenuItemView(item:$selectedItem, orders: orders)
+//                    .padding(5)
+//                    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 10))
+//                if presentGrid{
+//                    MenuGridView(menu: menu, selectedItem: $selectedItem)
+//                } else {
+//                    MenuView(menu:menu, selectedItem: $selectedItem)
+//                }
+                MenuView2(menu: menu)
             }
-            .toolbar {
-#if os(iOS)
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-#endif
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
+            .tabItem{
+                Label("Menu", systemImage: "list.bullet")
             }
-            Text("Select an item")
+            VStack{
+            HeaderView()
+                .shadow(radius: 5)
+                .environment(\.colorScheme,.light)
+            StatusBarView(showOrders: $showOrders, presentGrid: $presentGrid)
+//            if showOrders
+//            {
+                OrderView(orders: orders)
+                    .cornerRadius(10)
+            }.tabItem{
+                Label("Order", systemImage: "cart")
+            }
+            
+            
         }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(context: viewContext)
-            newItem.timestamp = Date()
-
-            do {
-                try viewContext.save()
-            } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            offsets.map { items[$0] }.forEach(viewContext.delete)
-
-            do {
-                try viewContext.save()
-            } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
-        }
+        .padding()
+        .background(.linearGradient(colors: [.cyan,Color("Surf"),Color("Sky"),.white], startPoint: .topLeading, endPoint: .bottom))
+        .environmentObject(orders)
     }
 }
 
@@ -83,6 +64,8 @@ private let itemFormatter: DateFormatter = {
     return formatter
 }()
 
-#Preview {
-    ContentView().environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView(menu:MenuModel().menu)
+    }
 }

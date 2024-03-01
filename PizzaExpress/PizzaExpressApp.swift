@@ -13,7 +13,7 @@ struct PizzaExpressApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(menu:MenuModel().menu)
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
         }
     }
